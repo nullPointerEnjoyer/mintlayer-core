@@ -636,6 +636,7 @@ impl BalanceAccumulator {
     }
 }
 
+#[allow(clippy::unused_async)]
 async fn increase_address_amount(
     acc: &mut BalanceAccumulator,
     address: &Address<Destination>,
@@ -646,6 +647,7 @@ async fn increase_address_amount(
     acc.add_address_delta(address, coin_or_token_id, amount_delta_i128(amount));
 }
 
+#[allow(clippy::unused_async)]
 async fn decrease_address_amount(
     acc: &mut BalanceAccumulator,
     address: Address<Destination>,
@@ -656,6 +658,7 @@ async fn decrease_address_amount(
     acc.add_address_delta(&address, coin_or_token_id, -amount_delta_i128(amount));
 }
 
+#[allow(clippy::unused_async)]
 async fn increase_locked_address_amount(
     acc: &mut BalanceAccumulator,
     address: &Address<Destination>,
@@ -666,6 +669,7 @@ async fn increase_locked_address_amount(
     acc.add_locked_delta(address, coin_or_token_id, amount_delta_i128(amount));
 }
 
+#[allow(clippy::unused_async)]
 async fn decrease_address_locked_amount(
     acc: &mut BalanceAccumulator,
     address: Address<Destination>,
@@ -676,6 +680,7 @@ async fn decrease_address_locked_amount(
     acc.add_locked_delta(&address, coin_or_token_id, -amount_delta_i128(amount));
 }
 
+#[allow(clippy::unused_async)]
 async fn increase_statistic_amount(
     acc: &mut BalanceAccumulator,
     statistic: CoinOrTokenStatistic,
@@ -687,6 +692,7 @@ async fn increase_statistic_amount(
     Ok(())
 }
 
+#[allow(clippy::unused_async)]
 async fn decrease_statistic_amount(
     acc: &mut BalanceAccumulator,
     statistic: CoinOrTokenStatistic,
@@ -1284,7 +1290,7 @@ async fn tx_fees<T: ApiServerStorageRead>(
         &pos_accounting_adapter,
         &tokens_view,
         tx.inputs(),
-        &inputs_utxos,
+        inputs_utxos,
     )
     .expect("valid block");
     let outputs_accumulator =
@@ -1411,7 +1417,7 @@ async fn update_tables_from_consensus_data<T: ApiServerStorageWrite>(
             for input in pos_data.kernel_inputs() {
                 match input {
                     TxInput::Utxo(outpoint) => {
-                        let utxo = cached_get_utxo(&utxo_cache, outpoint, db_tx)
+                        let utxo = cached_get_utxo(utxo_cache, outpoint, db_tx)
                             .await?
                             .expect("must be present");
                         set_utxo(
@@ -1508,6 +1514,7 @@ async fn update_tables_from_consensus_data<T: ApiServerStorageWrite>(
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn update_tables_from_transaction<T: ApiServerStorageWrite>(
     chain_config: Arc<ChainConfig>,
     db_tx: &mut T,
@@ -1547,6 +1554,7 @@ async fn update_tables_from_transaction<T: ApiServerStorageWrite>(
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn update_tables_from_transaction_inputs<T: ApiServerStorageWrite>(
     chain_config: Arc<ChainConfig>,
     db_tx: &mut T,
@@ -1853,7 +1861,7 @@ async fn update_tables_from_transaction_inputs<T: ApiServerStorageWrite>(
             }
             TxInput::Utxo(outpoint) => match outpoint.source_id() {
                 OutPointSourceId::BlockReward(_) => {
-                    let utxo = cached_get_utxo(&utxo_cache, outpoint, db_tx)
+                    let utxo = cached_get_utxo(utxo_cache, outpoint, db_tx)
                         .await?
                         .expect("must be present");
                     set_utxo(
@@ -1903,7 +1911,7 @@ async fn update_tables_from_transaction_inputs<T: ApiServerStorageWrite>(
                     }
                 }
                 OutPointSourceId::Transaction(_) => {
-                    let utxo = cached_get_utxo(&utxo_cache, outpoint, db_tx)
+                    let utxo = cached_get_utxo(utxo_cache, outpoint, db_tx)
                         .await?
                         .expect("must be present");
                     set_utxo(
@@ -2062,6 +2070,7 @@ async fn update_tables_from_transaction_inputs<T: ApiServerStorageWrite>(
     Ok(())
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn update_tables_from_transaction_outputs<T: ApiServerStorageWrite>(
     chain_config: Arc<ChainConfig>,
     db_tx: &mut T,
@@ -2599,6 +2608,7 @@ async fn decommission_pool_and_decrement_staked<T: ApiServerStorageWrite>(
     Ok(pool_data)
 }
 
+#[allow(clippy::too_many_arguments)]
 async fn set_utxo<T: ApiServerStorageWrite>(
     outpoint: UtxoOutPoint,
     output: &TxOutput,
@@ -2661,7 +2671,7 @@ mod median_window_tests {
     use super::previous_and_new_median_time_from_window;
     use chainstate::{MEDIAN_TIME_SPAN, calculate_median_time_past_from_blocktimestamps};
     use common::chain::block::timestamp::BlockTimestamp;
-    use randomness::{CryptoRng, RngExt as _};
+    use randomness::RngExt as _;
     use test_utils::random::{Seed, make_seedable_rng};
 
     #[test]
