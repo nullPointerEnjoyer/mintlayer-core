@@ -193,6 +193,31 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
     - Advisory-exposed dependencies were patched (rustls-webpki,
       webpki-root-certs, tokio) and the cargo-vet imports refreshed.
 
+### Fixed
+  - Node:
+    - the `chainstate_dex_subscribe_to_trades` subscription is now rejected
+      explicitly (with an error notification to the client) also when the
+      chainstate handle call fails, e.g. while the node is shutting down;
+      previously the client's subscription was left hanging in that case.
+    - a DEX trades subscription whose pair list exceeds the 256 distinct pairs
+      cap is now rejected while the list is being parsed, instead of after the
+      whole list has been parsed, so an over-long list no longer does the full
+      parse work before the rejection.
+    - the log subscription forwarder now reports a failed event send the same
+      way as a client disconnect, so both close paths produce the same
+      server-side outcome.
+  - Wallet:
+    - the echoed offending value of a rejected DEX trades pair is truncated
+      loudly: the 64-character echo cap no longer silently degrades to echoing
+      the full value.
+
+### Changed
+  - Node:
+    - DEX trades events are shared by reference with the subscribers of a
+      `chainstate_dex_subscribe_to_trades` subscription: each trade is allocated
+      once, so the fan-out cost per trade no longer grows with the subscriber
+      count.
+
 ## [1.4.1] - 2026-09-25
 
 ### Added

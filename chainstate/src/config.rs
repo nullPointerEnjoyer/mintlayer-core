@@ -62,6 +62,13 @@ pub struct ChainstateConfig {
     /// gate classifies against (enabling the gate without the tracking is rejected at
     /// chainstate initialization). `None` means the default for the chain type applies:
     /// enabled on the testnet, disabled elsewhere.
+    ///
+    /// Note: nodes that differ in the effective value of this setting can follow
+    /// different best chains while a refused branch carries no block with a fresh
+    /// seal: the refused chain stays stored and relayable, and the divergence heals
+    /// as soon as the branch gains such a block, whose activation re-runs the
+    /// classification on every node. Keep the setting uniform across the nodes of a
+    /// network unless the divergence is understood and wanted.
     pub pos_seal_activation_gate: Option<bool>,
 }
 

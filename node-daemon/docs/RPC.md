@@ -871,7 +871,10 @@ stream ends; jsonrpsee-based Rust clients observe that end as `next()` returning
 to subscribe again, re-deriving what it missed from the blocks. The node closes every
 subscription the same way when its trade dispatcher falls more than 64 blocks behind
 the chain. At most 32 subscribers are served at a time; a subscription beyond that is
-rejected with an error.
+rejected with an error. A slot is reclaimed when its client disconnects, when its queue
+overflows, or at the next dispatch after either; note that while no trades are being
+produced at all, connected subscribers keep their slots, so a quiet chain cannot free
+the slots of idle subscriptions.
 
 
 Parameters:
