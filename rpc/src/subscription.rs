@@ -164,8 +164,14 @@ async fn forward_queue<T, U: serde::Serialize, Q: EventQueue<T>>(
         if let Some(event) = filter_map_fn(event) {
             // a send failure means the client connection is gone: end the forwarder through the
             // same ClientGone result as the subscription-closed path, instead of surfacing the
-            // transport error, so both close paths report the same server-side outcome
-            if subscription.send(&event).await.is_err() {
+            // transport error, so both close paths report the same server-side outcome; the
+            // failure is logged, so even a close that turns out to have another cause (e.g. a
+            // serialization failure of a future event type) leaves a trace
+            if let Err(err) = subscription.send(&event).await {
+                log::debug!(
+                    "The subscription forwarder could not send an event to the client: {err}; \
+                     ending the subscription as a client disconnect"
+                );
                 return Ok(ForwardingEnd::ClientGone);
             }
         }
