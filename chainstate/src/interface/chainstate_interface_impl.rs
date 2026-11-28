@@ -77,7 +77,7 @@ where
     fn subscribe_to_rpc_dex_trades(
         &mut self,
         pairs: Option<DexTradePairSet>,
-    ) -> Result<tokio::sync::mpsc::Receiver<DexTradeInfo>, DexTradesSubscribeError> {
+    ) -> Result<tokio::sync::mpsc::Receiver<Arc<DexTradeInfo>>, DexTradesSubscribeError> {
         self.chainstate.subscribe_to_dex_trades_broadcast(pairs)
     }
 

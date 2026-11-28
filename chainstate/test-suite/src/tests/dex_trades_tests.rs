@@ -15,7 +15,7 @@
 
 //! Tests of the DEX trade records collected at block connection and announced with the new tip.
 
-use std::time::Duration;
+use std::{sync::Arc, time::Duration};
 
 use rstest::rstest;
 
@@ -254,7 +254,7 @@ fn expected_trade(
 
 /// Receive exactly `count` trades, then make sure no other trade is announced.
 async fn expect_trades(
-    trades_rx: &mut mpsc::Receiver<DexTradeInfo>,
+    trades_rx: &mut mpsc::Receiver<Arc<DexTradeInfo>>,
     count: usize,
 ) -> Vec<DexTradeInfo> {
     let mut trades = Vec::with_capacity(count);
@@ -263,7 +263,7 @@ async fn expect_trades(
             .await
             .expect("timed out waiting for a trade")
             .expect("trades channel closed");
-        trades.push(trade);
+        trades.push(Arc::unwrap_or_clone(trade));
     }
     if let Ok(unexpected) = tokio::time::timeout(NO_TRADE_TIMEOUT, trades_rx.recv()).await {
         panic!("unexpected extra trade: {unexpected:?}");

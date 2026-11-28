@@ -223,7 +223,7 @@ impl<S: BlockchainStorage, V: TransactionVerificationStrategy> Chainstate<S, V> 
     pub fn subscribe_to_dex_trades_broadcast(
         &mut self,
         pairs: Option<DexTradePairSet>,
-    ) -> Result<mpsc::Receiver<DexTradeInfo>, DexTradesSubscribeError> {
+    ) -> Result<mpsc::Receiver<Arc<DexTradeInfo>>, DexTradesSubscribeError> {
         let dispatcher = match &mut self.dex_trades_dispatcher {
             Some(dispatcher) => dispatcher,
             None => self.dex_trades_dispatcher.insert(DexTradesDispatcher::start()?),

@@ -58,7 +58,7 @@ pub trait ChainstateInterface: Send + Sync {
     fn subscribe_to_rpc_dex_trades(
         &mut self,
         pairs: Option<DexTradePairSet>,
-    ) -> Result<tokio::sync::mpsc::Receiver<DexTradeInfo>, DexTradesSubscribeError>;
+    ) -> Result<tokio::sync::mpsc::Receiver<Arc<DexTradeInfo>>, DexTradesSubscribeError>;
     /// Process the given block. If a reorg occurs, return the block index of the new tip.
     /// Otherwise return None.
     fn process_block(

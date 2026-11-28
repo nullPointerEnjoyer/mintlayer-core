@@ -19,7 +19,9 @@
 //! single bounded send, whatever the number of subscribers, and never blocks on them. A task
 //! started with the first subscriber dispatches the trades: for every trade, every subscriber
 //! whose pairs select it gets the trade in its own bounded queue, from which the subscription
-//! forwarder sends it to the client. A subscriber that falls behind by a full queue is dropped,
+//! forwarder sends it to the client. Each trade is allocated once and shared with its selecting
+//! subscribers by reference, so the fan-out cost per trade does not grow with the subscriber
+//! count. A subscriber that falls behind by a full queue is dropped,
 //! which closes its subscription with an error notification to the client; a client that cannot
 //! keep up reconnects and re-derives. When the dispatcher itself falls behind the chain, every
 //! subscriber is dropped the same way and the dispatcher is discarded with the batches still
@@ -75,11 +77,13 @@ pub enum DexTradesDispatchError {
     Closed(Vec<DexTradeInfo>),
 }
 
-/// A subscriber: the pairs it selected (all trades if `None`) and its bounded queue.
+/// A subscriber: the pairs it selected (all trades if `None`) and its bounded queue. The queue
+/// carries the trades by reference: the dispatcher allocates each trade once and the selecting
+/// subscribers share it.
 #[derive(Debug)]
 struct DexTradesSubscriber {
     pairs: Option<DexTradePairSet>,
-    trades_tx: mpsc::Sender<DexTradeInfo>,
+    trades_tx: mpsc::Sender<Arc<DexTradeInfo>>,
 }
 
 /// The fan-out of the DEX trades to the subscribers; see the [module documentation](self).
@@ -131,7 +135,7 @@ impl DexTradesDispatcher {
     pub fn subscribe(
         &self,
         pairs: Option<DexTradePairSet>,
-    ) -> Result<mpsc::Receiver<DexTradeInfo>, DexTradesSubscribeError> {
+    ) -> Result<mpsc::Receiver<Arc<DexTradeInfo>>, DexTradesSubscribeError> {
         let mut subscribers = Self::lock_subscribers(&self.subscribers);
         Self::reap_closed(&mut subscribers);
         if subscribers.len() >= MAX_DEX_TRADES_SUBSCRIBERS {
@@ -196,6 +200,8 @@ impl DexTradesDispatcher {
                 if trades_done > 0 && trades_done % subscriber_queue_capacity == 0 {
                     tokio::task::yield_now().await;
                 }
+                // each trade is allocated once, and every selecting subscriber shares it
+                let trade = Arc::new(trade);
                 let mut dropped_for_falling_behind = 0;
                 Self::lock_subscribers(&subscribers).retain(|subscriber| {
                     let selected =
@@ -203,7 +209,7 @@ impl DexTradesDispatcher {
                     if !selected {
                         return true;
                     }
-                    match subscriber.trades_tx.try_send(trade.clone()) {
+                    match subscriber.trades_tx.try_send(Arc::clone(&trade)) {
                         Ok(()) => true,
                         Err(mpsc::error::TrySendError::Full(_)) => {
                             dropped_for_falling_behind += 1;
@@ -276,7 +282,7 @@ mod tests {
     }
 
     /// Receive the trades until the queue closes; return the low bytes of their transaction ids.
-    async fn receive_all(mut rx: mpsc::Receiver<DexTradeInfo>) -> Vec<u64> {
+    async fn receive_all(mut rx: mpsc::Receiver<Arc<DexTradeInfo>>) -> Vec<u64> {
         let mut tx_ids = Vec::new();
         while let Some(trade) = rx.recv().await {
             tx_ids.push(trade.tx_id.to_hash().to_low_u64_be());
