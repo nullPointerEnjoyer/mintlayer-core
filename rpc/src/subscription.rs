@@ -87,11 +87,29 @@ pub async fn accept<T>(pending: Pending) -> Result<Sink<T>, Error> {
 /// e.g. when the subscription parameters fail validation.
 ///
 /// Note that returning an error from a subscription method does not reach the client; the
-/// request must be rejected explicitly.
+/// request must be rejected explicitly. For a failure that is not the client's fault (a
+/// server-side or capacity problem), use [`reject_internal`], so that the client does not
+/// classify the failure as a mistake of its own.
 pub async fn reject(pending: Pending, message: impl std::fmt::Display) {
     pending
         .reject(jsonrpsee::types::error::ErrorObjectOwned::owned(
             jsonrpsee::types::error::INVALID_PARAMS_CODE,
+            message.to_string(),
+            None::<Box<serde_json::value::RawValue>>,
+        ))
+        .await;
+}
+
+/// Reject a subscription request with an internal-error code delivered to the client, e.g.
+/// when the node cannot serve the subscription for a reason that is not a client mistake
+/// (a failing handle call, the node shutting down).
+///
+/// As with [`reject`], returning an error from a subscription method does not reach the
+/// client; the request must be rejected explicitly.
+pub async fn reject_internal(pending: Pending, message: impl std::fmt::Display) {
+    pending
+        .reject(jsonrpsee::types::error::ErrorObjectOwned::owned(
+            jsonrpsee::types::error::INTERNAL_ERROR_CODE,
             message.to_string(),
             None::<Box<serde_json::value::RawValue>>,
         ))

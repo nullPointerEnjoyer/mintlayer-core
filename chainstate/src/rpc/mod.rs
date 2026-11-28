@@ -635,9 +635,10 @@ impl ChainstateRpcServer for super::ChainstateHandle {
                 }
                 // the chainstate handle call itself failed, e.g. the node is shutting down:
                 // an error returned from a subscription method does not reach the client, so
-                // the pending subscription is rejected explicitly instead of being left hanging
+                // the pending subscription is rejected explicitly instead of being left hanging;
+                // the failure is not a client mistake, so it is reported as an internal error
                 Err(err) => {
-                    rpc::subscription::reject(pending, err).await;
+                    rpc::subscription::reject_internal(pending, err).await;
                     return Ok(());
                 }
             };
