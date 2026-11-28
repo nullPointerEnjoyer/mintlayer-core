@@ -77,16 +77,17 @@ impl RpcTradingPair {
             return Ok(None);
         };
         // the pairs are parsed one by one into the set, so that an invalid one is reported
-        // without the others being buffered first; the cap applies to the distinct pairs
+        // and an over-long list is rejected without buffering more than the cap; the cap
+        // applies to the distinct pairs
         let mut set = DexTradePairSet::default();
         for pair in pairs {
             set.insert(pair.parse()?);
-        }
-        if set.len() > MAX_TRADING_PAIRS {
-            return Err(RpcTradingPairError::TooManyPairs {
-                count: set.len(),
-                max: MAX_TRADING_PAIRS,
-            });
+            if set.len() > MAX_TRADING_PAIRS {
+                return Err(RpcTradingPairError::TooManyPairs {
+                    count: set.len(),
+                    max: MAX_TRADING_PAIRS,
+                });
+            }
         }
         Ok((!set.is_empty()).then_some(set))
     }
@@ -438,6 +439,18 @@ mod tests {
         // one more rejects the subscription
         assert_eq!(
             RpcTradingPair::parse_pairs(pairs_of(1..=max as u64 + 1)),
+            Err(RpcTradingPairError::TooManyPairs {
+                count: max + 1,
+                max
+            })
+        );
+        // the cap rejects while the list is being parsed: a malformed pair positioned
+        // after the cap-many valid ones is never reached, the cap error wins
+        let mut oversize: Vec<_> = (1..=max as u64).map(pair_of).collect();
+        oversize.push(pair_of(max as u64 + 1));
+        oversize.push(pair("not-a-currency", "coin"));
+        assert_eq!(
+            RpcTradingPair::parse_pairs(Some(oversize)),
             Err(RpcTradingPairError::TooManyPairs {
                 count: max + 1,
                 max
