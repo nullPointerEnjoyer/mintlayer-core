@@ -76,6 +76,15 @@ impl RpcTradingPair {
         let Some(pairs) = pairs else {
             return Ok(None);
         };
+        // a raw list far longer than the cap cannot yield a valid subscription, even with
+        // every pair repeated, so it is rejected before any of it is parsed; within the
+        // bound, a pair listed several times counts once
+        if pairs.len() > MAX_TRADING_PAIRS * 4 {
+            return Err(RpcTradingPairError::TooManyPairs {
+                count: pairs.len(),
+                max: MAX_TRADING_PAIRS,
+            });
+        }
         // the pairs are parsed one by one into the set, so that an invalid one is reported
         // and an over-long list is rejected without buffering more than the cap; the cap
         // applies to the distinct pairs
