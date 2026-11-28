@@ -198,11 +198,14 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
     - the `chainstate_dex_subscribe_to_trades` subscription is now rejected
       explicitly (with an error notification to the client) also when the
       chainstate handle call fails, e.g. while the node is shutting down;
-      previously the client's subscription was left hanging in that case.
+      previously the client's subscription was left hanging in that case. The
+      failure is reported with an internal-error code, since it is not a
+      mistake of the client.
     - a DEX trades subscription whose pair list exceeds the 256 distinct pairs
       cap is now rejected while the list is being parsed, instead of after the
-      whole list has been parsed, so an over-long list no longer does the full
-      parse work before the rejection.
+      whole list has been parsed, and a raw list longer than four times the cap
+      is rejected before any of it is parsed, so an over-long list no longer
+      does the full parse work before the rejection.
     - the log subscription forwarder now reports a failed event send the same
       way as a client disconnect, so both close paths produce the same
       server-side outcome.
