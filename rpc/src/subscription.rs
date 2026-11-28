@@ -144,7 +144,12 @@ async fn forward_queue<T, U: serde::Serialize, Q: EventQueue<T>>(
             return Ok(ForwardingEnd::QueueEnded);
         };
         if let Some(event) = filter_map_fn(event) {
-            subscription.send(&event).await?;
+            // a send failure means the client connection is gone: end the forwarder through the
+            // same ClientGone result as the subscription-closed path, instead of surfacing the
+            // transport error, so both close paths report the same server-side outcome
+            if subscription.send(&event).await.is_err() {
+                return Ok(ForwardingEnd::ClientGone);
+            }
         }
     }
 }
