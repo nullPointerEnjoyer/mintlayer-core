@@ -17,6 +17,8 @@
 //! [Ethereum pubsub spec](https://geth.ethereum.org/docs/interacting-with-geth/rpc/pubsub).
 
 use jsonrpsee::{PendingSubscriptionAcceptError, SubscriptionMessage};
+
+use logging::log;
 use tokio::sync::mpsc;
 
 use utils_networking::broadcaster;
