@@ -274,7 +274,10 @@ trait ChainstateRpc {
     /// to subscribe again, re-deriving what it missed from the blocks. The node closes every
     /// subscription the same way when its trade dispatcher falls more than 64 blocks behind
     /// the chain. At most 32 subscribers are served at a time; a subscription beyond that is
-    /// rejected with an error.
+    /// rejected with an error. A slot is reclaimed when its client disconnects, when its queue
+    /// overflows, or at the next dispatch after either; note that while no trades are being
+    /// produced at all, connected subscribers keep their slots, so a quiet chain cannot free
+    /// the slots of idle subscriptions.
     #[subscription(
         name = "dex_subscribe_to_trades",
         unsubscribe = "dex_unsubscribe_to_trades",
