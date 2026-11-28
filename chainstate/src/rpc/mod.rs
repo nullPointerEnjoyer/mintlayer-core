@@ -633,7 +633,13 @@ impl ChainstateRpcServer for super::ChainstateHandle {
                     rpc::subscription::reject(pending, err).await;
                     return Ok(());
                 }
-                Err(err) => return Err(err.into()),
+                // the chainstate handle call itself failed, e.g. the node is shutting down:
+                // an error returned from a subscription method does not reach the client, so
+                // the pending subscription is rejected explicitly instead of being left hanging
+                Err(err) => {
+                    rpc::subscription::reject(pending, err).await;
+                    return Ok(());
+                }
             };
         rpc::subscription::connect_mpsc_map(trade_rx, pending, |trade| {
             RpcDexTradeEvent::from_trade(&trade)
