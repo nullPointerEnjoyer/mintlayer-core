@@ -206,9 +206,9 @@ The format is loosely based on [Keep a Changelog](https://keepachangelog.com/en/
       whole list has been parsed, and a raw list longer than four times the cap
       is rejected before any of it is parsed, so an over-long list no longer
       does the full parse work before the rejection.
-    - the log subscription forwarder now reports a failed event send the same
-      way as a client disconnect, so both close paths produce the same
-      server-side outcome.
+    - the subscription forwarder now reports a failed event send the same way
+      as a client disconnect, so both close paths produce the same server-side
+      outcome.
   - Wallet:
     - the echoed offending value of a rejected DEX trades pair is truncated
       loudly: the 64-character echo cap no longer silently degrades to echoing
